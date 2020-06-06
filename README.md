@@ -3,7 +3,7 @@
 Kompletna aplikacja realizująca wszystkie funkcje z zrealizowanych zajęć laboratoryjnych przy wykorzystaniu interfejsów I2C (funkcje 1-6) i SPI (funkcja 7) w połączeniu z Raspberry Pi.
 
 ## Opis dostępnych funkcji
-| No. | Reference |
+| Numer funkcji | Opis funkcji |
 |:---:|:---:|
 | 1. | Odczyt temperatury z układu MPU6050 | 
 | 2. | Odczyt pomiarów z akcelerometru i żyroskopu z układu MPU6050 |
