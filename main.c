@@ -104,7 +104,7 @@ void menuHandle()
                 wrongChoice = false;
                 system("clear");
 				uint16_t userAddressToRead;
-                printf("Podaj adres komorki pamieci EEPROM spod jakiego chcesz odczytac wartosc: ");
+                printf("Podaj adres komorki pamieci EEPROM spod jakiego chcesz odczytac wartosc [0-511]: ");
                 scanf("%hd", &userAddressToRead);
                 uint16_t valueEEPROM = eepromRead(userAddressToRead);
 	            printf("Odczytana wartosc z komorki %d pamieci EEPROM: %d\n", userAddressToRead, valueEEPROM);
@@ -114,7 +114,7 @@ void menuHandle()
                 wrongChoice = false;
                 system("clear");
                 uint16_t userAddressToWrite, userValue;
-                printf("Podaj adres komorki pamieci EEPROM do jakiej chcesz zapisac wartosc: ");
+                printf("Podaj adres komorki pamieci EEPROM do jakiej chcesz zapisac wartosc [0-511]: ");
                 scanf("%hd", &userAddressToWrite);
                 printf("Podaj wartosc jaka chcesz zapisac: ");
                 scanf("%hd", &userValue);
