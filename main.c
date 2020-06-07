@@ -11,7 +11,6 @@
 #include <stdbool.h>
 #include <math.h>
 #include <ctype.h>
-#include <stdio_ext.h>
 
 /* ------------------------------------------- DEFINE -------------------------------------------*/
 #define LAST(a,c) ((a) & ((1<<(c))-1))
@@ -27,7 +26,7 @@ void levelRead(double accelXOut, double accelZOut);
 void dateTimeRead();
 void dateTimeWrite();
 uint16_t eepromRead(uint16_t userAddress);
-uint16_t eepromWrite(uint16_t userAddress, uint16_t userValue);
+void eepromWrite(uint16_t userAddress, uint16_t userValue);
 void tempPreasureRead();
 void authorsShow();
 void optionsShow();
@@ -104,22 +103,22 @@ void menuHandle()
                 wrongChoice = false;
                 system("clear");
 				uint16_t userAddressToRead;
-                printf("Podaj adres komorki pamieci EEPROM spod jakiego chcesz odczytac wartosc [0-511]: ");
-                scanf("%hd", &userAddressToRead);
+                printf("Podaj adres komorki pamieci EEPROM spod jakiego chcesz odczytac wartosc: ");
+                scanf("%hu", &userAddressToRead);
                 uint16_t valueEEPROM = eepromRead(userAddressToRead);
-	            printf("Odczytana wartosc z komorki %d pamieci EEPROM: %d\n", userAddressToRead, valueEEPROM);
+	            printf("Odczytana wartosc z komorki %hu pamieci EEPROM: %hu\n", userAddressToRead, valueEEPROM);
                 finalize();
                 break;
             case 6:
                 wrongChoice = false;
                 system("clear");
                 uint16_t userAddressToWrite, userValue;
-                printf("Podaj adres komorki pamieci EEPROM do jakiej chcesz zapisac wartosc [0-511]: ");
-                scanf("%hd", &userAddressToWrite);
+                printf("Podaj adres komorki pamieci EEPROM do jakiej chcesz zapisac wartosc: ");
+                scanf("%hu", &userAddressToWrite);
                 printf("Podaj wartosc jaka chcesz zapisac: ");
-                scanf("%hd", &userValue);
+                scanf("%hu", &userValue);
                 eepromWrite(userAddressToWrite, userValue);
-	            printf("W komorce %hd zapisano wartosc %hd\n", userAddressToWrite, userValue);
+	            printf("W komorce %hu zapisano wartosc %hu\n", userAddressToWrite, userValue);
                 finalize();
                 break;
             case 7:
@@ -446,6 +445,12 @@ void dateTimeWrite()
 }
 
 /* ------------------------------------------- Opcja 5 -------------------------------------------*/
+uint8_t i2cReadEEPROM(int fd, uint16_t address) {
+	wiringPiI2CWriteReg8(fd, (address > 8), (address & 0xFF));
+	delay(20);
+	return wiringPiI2CRead(fd);
+}
+
 uint16_t eepromRead(uint16_t userAddress)
 {
     int fd;
@@ -460,14 +465,21 @@ uint16_t eepromRead(uint16_t userAddress)
 	}
 	printf("Start I2C: odczyt z EEPROM\r\n");
 
-    wiringPiI2CWriteReg8(fd, (userAddress > 16), (userAddress & 0xff));
+    uint16_t valueH = i2cReadEEPROM(fd, userAddress) << 8;
+    uint16_t valueL = i2cReadEEPROM(fd, userAddress + 1);
+	uint16_t value = valueH | valueL; 
 	delay(20);
 
-	return wiringPiI2CRead(fd);
+	return value;
 }
 
 /* ------------------------------------------- Opcja 6 -------------------------------------------*/
-uint16_t eepromWrite(uint16_t userAddress, uint16_t userValue)
+void i2cWriteEEPROM(int fd, uint16_t address, uint16_t value) {
+	wiringPiI2CWriteReg16(fd, (address >> 8), (value << 8) | (address & 0xFF));
+	delay(20);
+}
+
+void eepromWrite(uint16_t userAddress, uint16_t userValue)
 {
     int fd;
     int addressEEPROM = 0x50;
@@ -481,7 +493,12 @@ uint16_t eepromWrite(uint16_t userAddress, uint16_t userValue)
 		exit(1);
 	}
 	printf("Start I2C: zapis do EEPROM\r\n");
-    wiringPiI2CWriteReg16(fd, (userAddress >> 8), (userValue << 8) | (userAddress & 0xff));
+    
+    uint8_t valueH = (userValue & 0xFF00) >> 8; 
+    uint8_t valueL = userValue & 0x00FF; 
+	i2cWriteEEPROM(fd, userAddress, valueH); 
+    i2cWriteEEPROM(fd, userAddress + 1, valueL);
+
 	delay(20);
 }
 
@@ -612,7 +629,7 @@ void tempPreasureRead()
 	if (wiringPiSPISetup(chan, speed) == -1)
     {
         printf("Blad inicjalizacji SPI\n");
-        return 0;
+        exit(1);
     }
 
 	init();
